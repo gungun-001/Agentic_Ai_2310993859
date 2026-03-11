@@ -20,8 +20,10 @@ from email_service import send_email
 load_dotenv()
 
 # ── Configure Groq client ────────────────────────────────────────────────────
-# _groq_client = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
-GROQ_API_KEY = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+try:
+    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+except Exception:
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 _groq_client = Groq(api_key=GROQ_API_KEY)
 _LLM_MODEL = "llama-3.3-70b-versatile"
 
