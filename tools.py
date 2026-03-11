@@ -11,16 +11,20 @@ LLM backend: Groq API with Llama 3 (llama-3.3-70b-versatile)
 import os
 import json
 import requests
+import streamlit as st
 from groq import Groq
 from dotenv import load_dotenv
-
+from dotenv import load_dotenv
+import streamlit as st
 from prompts import RESEARCH_ANALYST_PROMPT, EMAIL_WRITER_PROMPT
 from email_service import send_email
 
 load_dotenv()
 
 # ── Configure Groq client ────────────────────────────────────────────────────
-_groq_client = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
+# _groq_client = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+_groq_client = Groq(api_key=GROQ_API_KEY)
 _LLM_MODEL = "llama-3.3-70b-versatile"
 
 
