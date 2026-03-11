@@ -14,8 +14,6 @@ import requests
 import streamlit as st
 from groq import Groq
 from dotenv import load_dotenv
-from dotenv import load_dotenv
-import streamlit as st
 from prompts import RESEARCH_ANALYST_PROMPT, EMAIL_WRITER_PROMPT
 from email_service import send_email
 
