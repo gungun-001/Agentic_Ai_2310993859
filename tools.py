@@ -67,6 +67,12 @@ def is_valid_email(email: str) -> bool:
     return bool(re.match(pattern, email))
 
 
+def _extract_emails_from_text(text: str) -> list:
+    """Extract all email addresses from a string."""
+    import re
+    return re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text)
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 #  TOOL 1 – Lead Generator
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -165,34 +171,80 @@ Each key should map to a list of 2-3 short signal strings.
 def tool_contact_finder(company_name: str, domain: str, icp: str) -> dict:
     """
     Find the most likely decision-maker contact for a company.
-    Implements validation and generic fallback logic to prevent 'Recipient not found' errors.
+    Uses: Hunter.io (if available) -> SerpAPI search -> LLM guess -> Generic fallback.
     """
+    serpapi_key = os.getenv("SERPAPI_KEY")
+    hunter_key = os.getenv("HUNTER_API_KEY")
+    
+    # --- Strategy 1: Hunter.io (Highly Reliable) ---
+    if hunter_key:
+        try:
+            resp = requests.get(
+                "https://api.hunter.io/v2/domain-search",
+                params={"domain": domain, "api_key": hunter_key, "limit": 3},
+                timeout=10
+            )
+            data = resp.json()
+            emails = data.get("data", {}).get("emails", [])
+            if emails:
+                best = emails[0]
+                return {
+                    "name": f"{best.get('first_name', 'Team')} {best.get('last_name', '')}".strip(),
+                    "role": best.get("position", "Professional"),
+                    "email": best.get("value"),
+                    "source": "Hunter.io"
+                }
+        except Exception:
+            pass
+
+    # --- Strategy 2: Web Search for actual emails ---
+    if serpapi_key:
+        try:
+            query = f"{company_name} {domain} contact email"
+            resp = requests.get(
+                "https://serpapi.com/search.json",
+                params={"q": query, "api_key": serpapi_key, "num": 5},
+                timeout=10,
+            )
+            data = resp.json()
+            snippets = " ".join([r.get("snippet", "") for r in data.get("organic_results", [])])
+            found_emails = _extract_emails_from_text(snippets)
+            
+            # Filter for emails belonging to the domain
+            valid_found = [e for e in found_emails if domain in e.lower() and is_valid_email(e)]
+            if valid_found:
+                return {
+                    "name": "Team",
+                    "role": "Contact",
+                    "email": valid_found[0],
+                    "source": "SerpAPI Search"
+                }
+        except Exception:
+            pass
+
+    # --- Strategy 3: LLM attempt ---
     prompt = CONTACT_FINDER_PROMPT.format(
         company_name=company_name, domain=domain, icp=icp
     )
-    
-    # Primary strategy: LLM attempt
     try:
         text = _llm_chat(prompt, system="You are a B2B contact researcher. Return only valid JSON.")
         contact = _parse_json(text)
-        
-        # Validate the generated email
         email = contact.get("email", "").lower()
         if is_valid_email(email) and domain in email:
             return contact
-            
     except Exception:
         pass
 
-    # Secondary strategy: Reliable generic fallbacks
-    # We prefer info@, contact@, sales@, etc. if the guess is invalid or missing
-    fallbacks = [f"contact@{domain}", f"info@{domain}", f"hello@{domain}"]
+    # --- Strategy 4: Safe Fallbacks (tried in order) ---
+    # contact@ failed for Glassdoor, so let's use a broader list
+    fallbacks = [f"info@{domain}", f"hello@{domain}", f"support@{domain}", f"contact@{domain}"]
     
     return {
         "name": "Team",
         "role": "Decision Maker",
-        "email": fallbacks[0], # Default to contact@
-        "is_fallback": True
+        "email": fallbacks[0], 
+        "is_fallback": True,
+        "source": "Fallback"
     }
 
 
