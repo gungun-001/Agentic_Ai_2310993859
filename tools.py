@@ -60,6 +60,13 @@ def _parse_json(text: str):
     return json.loads(text.strip())
 
 
+def is_valid_email(email: str) -> bool:
+    """Basic regex-based email validation."""
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 #  TOOL 1 – Lead Generator
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -158,20 +165,35 @@ Each key should map to a list of 2-3 short signal strings.
 def tool_contact_finder(company_name: str, domain: str, icp: str) -> dict:
     """
     Find the most likely decision-maker contact for a company.
-
-    Returns: {"name": str, "role": str, "email": str}
+    Implements validation and generic fallback logic to prevent 'Recipient not found' errors.
     """
     prompt = CONTACT_FINDER_PROMPT.format(
         company_name=company_name, domain=domain, icp=icp
     )
+    
+    # Primary strategy: LLM attempt
     try:
         text = _llm_chat(prompt, system="You are a B2B contact researcher. Return only valid JSON.")
         contact = _parse_json(text)
-        if isinstance(contact, dict) and "email" in contact:
+        
+        # Validate the generated email
+        email = contact.get("email", "").lower()
+        if is_valid_email(email) and domain in email:
             return contact
-        return {"name": "Unknown", "role": "Decision Maker", "email": f"contact@{domain}"}
+            
     except Exception:
-        return {"name": "Unknown", "role": "Decision Maker", "email": f"contact@{domain}"}
+        pass
+
+    # Secondary strategy: Reliable generic fallbacks
+    # We prefer info@, contact@, sales@, etc. if the guess is invalid or missing
+    fallbacks = [f"contact@{domain}", f"info@{domain}", f"hello@{domain}"]
+    
+    return {
+        "name": "Team",
+        "role": "Decision Maker",
+        "email": fallbacks[0], # Default to contact@
+        "is_fallback": True
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

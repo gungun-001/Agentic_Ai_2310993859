@@ -51,10 +51,11 @@ decision-maker who would respond to a cold outreach email based on the ICP.
 
 RULES:
 - Pick a realistic role (CEO, CTO, VP Sales, Head of Product, etc.)
-- Generate a plausible professional email using common patterns:
-  firstname@domain, first.last@domain, or similar
-- Use a realistic first and last name
-- Return ONLY valid JSON — no markdown, no extra text
+- For the email, PREFER reliable generic company emails if a specific personal email cannot be verified. 
+- Accepted patterns: info@{domain}, contact@{domain}, hello@{domain}, sales@{domain}, or support@{domain}.
+- If you guess a personal email, use common patterns like first.last@{domain} or first@{domain}.
+- Use a realistic first and last name for the contact persona.
+- Return ONLY valid JSON — no markdown, no extra text.
 
 OUTPUT FORMAT (strict JSON):
 {{"name": "Full Name", "role": "Job Title", "email": "email@domain.com"}}

@@ -64,6 +64,8 @@ def process_company(
         on_log(f"👤 [{company_name}] Finding decision-maker …")
     contact = tool_contact_finder(company_name, domain, icp)
     result["contact"] = contact
+    if on_log and contact.get("is_fallback"):
+        on_log(f"⚠️ [{company_name}] Using safe fallback email: {contact.get('email')}")
 
     # ── Step 3: Research Analysis ─────────────────────────────────────────
     if on_log:
