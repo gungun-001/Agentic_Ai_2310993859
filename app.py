@@ -303,7 +303,7 @@ def add_log(msg):
 
 # ── CSS ──
 st.markdown("""<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Material+Icons&display=swap');
 #MainMenu, footer { display: none !important; }
 html, body, [class*="css"], .stMarkdown, p, span, label, div { font-family: 'Inter', sans-serif !important; }
 .stApp { background: #0d0d0d !important; }
@@ -362,7 +362,8 @@ input::placeholder, textarea::placeholder { color: #555 !important; -webkit-text
 /* Misc */
 hr { border: none; border-top: 1px solid #1a1a1a; margin: 1rem 0; }
 div[data-testid="stAlert"] { border-radius: 10px !important; font-family: 'Inter', sans-serif !important; }
-div[data-testid="stExpander"] { border: 1px solid #1e1e1e !important; border-radius: 10px !important; background: #111 !important; }
+div[data-testid="stExpander"] { border: 1px solid #1e1e1e !important; border-radius: 10px !important; background: #111 !important; margin-top: 10px; }
+div[data-testid="stExpander"] summary { padding: 5px 0 !important; }
 
 /* Auth styles (preserved) */
 .auth-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(5,5,10,0.7); backdrop-filter: blur(12px); z-index: 99999; display: flex; align-items: center; justify-content: center; }
@@ -561,7 +562,7 @@ elif cs == 4:
             with hdr2:
                 approvals[i] = st.checkbox("☑ Approve Delivery", key=f"ap_{i}", value=True)
 
-            with st.expander(f"▶ View Strategic Brief"):
+            with st.expander("View Strategic Brief"):
                 st.markdown(d.get("account_brief","No brief available."))
 
             st.markdown(f'<div class="email-body-box"><div class="email-subject-line">Subject: {subj}</div>\n{body}</div>', unsafe_allow_html=True)
@@ -671,7 +672,7 @@ elif cs == 6:
             ct = d.get("contact",{})
             st.markdown(f'<div class="email-card">', unsafe_allow_html=True)
             st.markdown(f"**{d.get('company','')}** ({ct.get('email','N/A')})")
-            with st.expander("▶ View Strategic Brief"):
+            with st.expander("View Strategic Brief"):
                 st.markdown(d.get("account_brief",""))
             body = d.get("email_body",""); subj = d.get("email_subject","")
             st.markdown(f'<div class="email-body-box"><div class="email-subject-line">Subject: {subj}</div>\n{body}</div>', unsafe_allow_html=True)
