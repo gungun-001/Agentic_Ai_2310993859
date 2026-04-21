@@ -33,7 +33,7 @@ try:
 except Exception:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 _groq_client = Groq(api_key=GROQ_API_KEY)
-_LLM_MODEL = "llama-3.3-70b-versatile"
+_LLM_MODEL = "llama-3.1-8b-instant"
 
 
 def _llm_chat(prompt: str, system: str = "You are a helpful assistant.") -> str:
