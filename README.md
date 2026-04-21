@@ -1,19 +1,20 @@
-# 🔥 FireReach — Autonomous AI Outreach Agent
+# 🔥 FireReach V2 — Autonomous AI Outreach Agent
 
-**Signal Harvesting → Research Analysis → Automated Outreach**
+**Lead Generation → Signal Harvesting → Contact Discovery → Research Analysis → Email Drafting → Automated Outreach**
 
-FireReach is a lightweight agentic AI prototype that researches target companies, generates personalized insights, and sends cold outreach emails — all autonomously using a three-tool function-calling pipeline.
+FireReach V2 is a powerful agentic AI platform that automates the entire sales outreach funnel. It identifies target companies based on your ICP, researches recent business signals, finds key decision-makers, and generates hyper-personalized outreach — all powered by Llama 3.3.
 
 ---
 
 ## ✨ Features
 
-- **Agentic AI Architecture** — Three tools called in strict sequential order
-- **Signal Harvesting** — Discovers funding rounds, hiring trends, leadership changes, tech stack moves, and social mentions
-- **Research Analysis** — LLM-powered account brief linking company signals to your ICP
-- **Automated Outreach** — Generates and sends hyper-personalized cold emails via SMTP
-- **Animated Splash Page** — Premium dark-themed UI with particle effects and gradient animations
-- **Live Pipeline Status** — Real-time progress indicators as each tool executes
+- **End-to-End Agentic Pipeline** — 6 specialized tools working in orchestration.
+- **Lead Generation** — Automatically identifies high-potential target companies matching your Ideal Customer Profile (ICP).
+- **Signal Harvesting** — Monitors funding rounds, hiring trends, leadership changes, and tech stack moves via SerpAPI.
+- **Contact Discovery** — Locates relevant decision-makers and their contact information.
+- **Strategic Research** — LLM-powered account briefs linking company signals to your specific value proposition.
+- **Hyper-Personalized Outreach** — Generates human-like, direct cold emails that reference real-time signals.
+- **Premium Streamlit UI** — Dark-themed workspace with real-time pipeline status and human-in-the-loop review.
 
 ---
 
@@ -22,26 +23,27 @@ FireReach is a lightweight agentic AI prototype that researches target companies
 | Component | Technology |
 |-----------|-----------|
 | **UI** | Streamlit |
-| **LLM** | Groq API (Llama 3.3 70B) |
-| **Signal Source** | SerpAPI (Google Search) / LLM fallback |
-| **Email** | Python smtplib (SMTP) |
-| **Language** | Python 3.10+ |
+| **LLM** | Groq API (Llama 3.3 70B Versatile) |
+| **Signal Source** | SerpAPI (Google Search) / LLM Fallback |
+| **Email** | Python `smtplib` (SMTP) |
+| **Orchestration** | Custom Agentic Workflow (Python) |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-├── app.py              # Streamlit UI (splash page + workspace)
-├── agent.py            # Agent orchestration (sequential tool calls)
-├── tools.py            # Three agentic tools
-├── email_service.py    # SMTP email sending service
-├── prompts.py          # System prompts for LLM
-├── DOCS.md             # Architecture documentation
+├── app.py              # Streamlit UI & Human-in-the-loop Workspace
+├── agent.py            # Agent orchestration (FireReach V2 Pipeline)
+├── tools.py            # Implementation of the 6 agentic tools
+├── email_service.py    # SMTP email delivery service
+├── prompts.py          # Structured system prompts for LLM
+├── database.py         # Lead and signal persistence
+├── DOCS.md             # Detailed architecture documentation
 ├── requirements.txt    # Python dependencies
 ├── .env.example        # Environment variable template
 └── .streamlit/
-    └── config.toml     # Streamlit dark theme config
+    └── config.toml     # Streamlit theme configuration
 ```
 
 ---
@@ -72,7 +74,7 @@ Edit `.env` and add your keys:
 ```env
 GROQ_API_KEY=your-groq-api-key      # Required
 SERPAPI_KEY=your-serpapi-key          # Optional (falls back to LLM)
-SMTP_HOST=smtp.gmail.com             # Optional (for sending emails)
+SMTP_HOST=smtp.gmail.com             # Optional (for actual sending)
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
@@ -87,58 +89,47 @@ streamlit run app.py
 
 ---
 
-## 🔄 Agent Pipeline
+## 🔄 Agent Pipeline (V2)
 
 ```
-User inputs: ICP + Company Name + Email
-                    │
-                    ▼
-     ┌──────────────────────────┐
-     │  🔍 tool_signal_harvester │ → Signals dict
-     └──────────────────────────┘
-                    │
-                    ▼
-     ┌──────────────────────────┐
-     │  🧠 tool_research_analyst │ → Account brief
-     └──────────────────────────┘
-                    │
-                    ▼
-     ┌──────────────────────────────────┐
-     │  ✉️ tool_outreach_automated_sender │ → Email + send status
-     └──────────────────────────────────┘
-                    │
-                    ▼
-          UI displays all results
+       [ User Input: ICP ]
+               │
+               ▼
+    ┌──────────────────────┐
+    │ 1. Lead Generator    │──▶ List of target companies
+    └──────────────────────┘
+               │
+               ▼
+    ┌──────────────────────┐
+    │ 2. Signal Harvester  │──▶ Company-specific signals
+    └──────────────────────┘
+               │
+               ▼
+    ┌──────────────────────┐
+    │ 3. Contact Finder    │──▶ Decision-maker info
+    └──────────────────────┘
+               │
+               ▼
+    ┌──────────────────────┐
+    │ 4. Research Analyst  │──▶ Strategic account brief
+    └──────────────────────┘
+               │
+               ▼
+    ┌──────────────────────┐
+    │ 5. Email Generator   │──▶ Personalized draft
+    └──────────────────────┘
+               │
+      [ Human Review ] ── (Optional)
+               │
+               ▼
+    ┌──────────────────────┐
+    │ 6. Outreach Sender   │──▶ Sent status
+    └──────────────────────┘
 ```
-
----
-
-## 🧰 Tool Schemas
-
-### `tool_signal_harvester(company_name)`
-Collects signals via SerpAPI or LLM fallback. Returns a dict with keys: `funding_rounds`, `hiring_trends`, `leadership_changes`, `tech_stack_changes`, `social_media_mentions`.
-
-### `tool_research_analyst(signals, icp)`
-Analyzes signals against the ICP using the LLM. Returns a two-paragraph account brief.
-
-### `tool_outreach_automated_sender(account_brief, email, icp)`
-Generates a personalized outreach email and sends it via SMTP. Returns subject, body, and send status.
-
----
-
-## 📸 Screenshots
-
-### Splash Page
-Animated dark-themed splash with gradient orbs, particle grid, and loading bar.
-
-### Agent Workspace
-Premium dark UI with pipeline visualization, styled inputs, and gradient launch button.
-
-### Pipeline Results
-Expandable sections showing signals, account brief, generated email, and delivery status.
 
 ---
 
 ## 📄 License
 
 This project is for educational and demonstration purposes.
+

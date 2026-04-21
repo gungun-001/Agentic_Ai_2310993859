@@ -1,40 +1,52 @@
-# FireReach – Architecture & Documentation
+# FireReach V2 – Architecture & Documentation
 
 > **Autonomous AI Outreach Agent**  
-> Signal Harvesting → Research Analysis → Automated Outreach
+> Lead Generation → Signal Harvesting → Contact Discovery → Research Analysis → Email Drafting → Automated Outreach
 
 ---
 
 ## Overview
 
-FireReach is a lightweight, three-step agentic pipeline that:
+FireReach V2 is an end-to-end agentic pipeline designed to automate high-quality B2B outreach. Unlike simple sequence-to-sequence scripts, this system uses an orchestrator to manage a multi-step workflow where each step informs the next.
 
-1. **Harvests company signals** from the web (funding, hiring, leadership, tech stack, social mentions).
-2. **Analyzes those signals** against your Ideal Customer Profile (ICP) to produce a concise account brief.
-3. **Generates and sends** a hyper-personalized outreach email referencing the discovered signals.
-
-The agent calls exactly **three tools** in strict sequential order — no steps are skipped.
+1. **Lead Generation**: Discovers target companies based on an Ideal Customer Profile (ICP).
+2. **Signal Harvesting**: Scrapes the web for recent business triggers (funding, hiring, etc.).
+3. **Contact Discovery**: Identifies the most relevant decision-maker for the target company.
+4. **Research Analysis**: Synthesizes signals into a strategic account brief.
+5. **Email Drafting**: Writes a hyper-personalized cold email referencing specific signals.
+6. **Automated Outreach**: Sends the email via SMTP (with optional human review).
 
 ---
 
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TD
     UI["🖥️ Streamlit UI<br/>(app.py)"]
-    AG["🤖 Agent<br/>(agent.py)"]
-    T1["🔍 Signal<br/>Harvester"]
-    T2["🧠 Research<br/>Analyst"]
-    T3["✉️ Outreach<br/>Sender"]
-    LLM["Gemini 2.0 Flash"]
-    SMTP["SMTP Server"]
-    SERP["SerpAPI / LLM"]
+    AG["🤖 Agent Orchestrator<br/>(agent.py)"]
+    
+    subgraph Tools ["🧰 Agentic Tools (tools.py)"]
+        T1["🔍 Lead Gen"]
+        T2["📡 Signal Harvester"]
+        T3["👤 Contact Finder"]
+        T4["🧠 Research Analyst"]
+        T5["✉️ Email Drafter"]
+        T6["📤 SMTP Sender"]
+    end
 
-    UI -->|icp, company, email| AG
-    AG --> T1 --> SERP
-    AG --> T2 --> LLM
+    LLM["Groq (Llama 3.3 70B)"]
+    SERP["SerpAPI / Google"]
+    SMTP["SMTP Server"]
+
+    UI -->|ICP| AG
+    AG --> T1 --> LLM
+    AG --> T2 --> SERP
     AG --> T3 --> LLM
-    T3 --> SMTP
+    AG --> T4 --> LLM
+    AG --> T5 --> LLM
+    AG --> T6 --> SMTP
+    
+    AG -->|Progress| UI
 ```
 
 ---
@@ -43,101 +55,64 @@ flowchart LR
 
 | File | Purpose |
 |------|---------|
-| `app.py` | Streamlit interface — inputs, progress, results |
-| `agent.py` | Sequential orchestrator — calls the 3 tools in order |
-| `tools.py` | Implementation of the three agentic tools |
-| `email_service.py` | Thin SMTP wrapper with env-var configuration |
-| `prompts.py` | System prompts for the LLM (analyst & email writer) |
-| `requirements.txt` | Python dependencies |
-| `.env.example` | Template for environment variables |
+| `app.py` | Streamlit interface — inputs, progress tracking, and lead review. |
+| `agent.py` | Pipeline orchestrator — manages the sequential execution of tools. |
+| `tools.py` | Implementation of the 6 core agentic tools. |
+| `database.py` | SQLite persistence for leads, signals, and outreach status. |
+| `email_service.py` | SMTP wrapper for reliable email delivery. |
+| `prompts.py` | Managed system prompts for various LLM stages. |
+| `requirements.txt` | Python dependencies. |
+| `.env.example` | Template for environment variables. |
 
 ---
 
 ## Tool Schemas
 
-### 1. `tool_signal_harvester(company_name)`
+### 1. `tool_lead_generator(icp)`
+Generates a list of target companies (Name, Domain, Reason) matching the user's ICP using the LLM.
 
-| Field | Detail |
-|-------|--------|
-| **Input** | `company_name: str` |
-| **Output** | `dict` with keys: `funding_rounds`, `hiring_trends`, `leadership_changes`, `tech_stack_changes`, `social_media_mentions` — each mapping to a `list[str]` |
-| **Data source** | SerpAPI Google Search (when `SERPAPI_KEY` is set) **or** Gemini LLM fallback |
+### 2. `tool_signal_harvester(company_name)`
+Collects real-world business signals (funding, hiring, tech stack) via SerpAPI or LLM fallback.
 
-### 2. `tool_research_analyst(signals, icp)`
+### 3. `tool_contact_finder(company_name, domain, icp)`
+Heuristically determines the best persona to target and generates/finds their contact details.
 
-| Field | Detail |
-|-------|--------|
-| **Input** | `signals: dict` (from tool 1), `icp: str` |
-| **Output** | `str` — two-paragraph account brief |
-| **LLM** | Gemini 2.0 Flash |
+### 4. `tool_research_analyst(signals, icp)`
+Analyzes signals to create a "Strategic Account Brief" explaining *why* the product is a fit right now.
 
-### 3. `tool_outreach_automated_sender(account_brief, email, icp)`
+### 5. `tool_email_generator(account_brief, contact_name, icp, ...)`
+Drafts a personalized, human-sounding email based on the research brief.
 
-| Field | Detail |
-|-------|--------|
-| **Input** | `account_brief: str` (from tool 2), `email: str`, `icp: str` |
-| **Output** | `dict` with `email_subject: str`, `email_body: str`, `send_status: {"success": bool, "message": str}` |
-| **LLM** | Gemini 2.0 Flash (body + subject) |
-| **Email** | Python `smtplib` via `email_service.py` |
+### 6. `tool_send_email(to, subject, body)`
+Handles the final delivery of the approved email via the configured SMTP server.
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file (see `.env.example`):
-
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GEMINI_API_KEY` | **Yes** | Google Gemini API key |
-| `SERPAPI_KEY` | No | SerpAPI key for real web search; omit to use LLM fallback |
-| `SMTP_HOST` | No* | SMTP server hostname |
-| `SMTP_PORT` | No* | SMTP port (usually 587) |
-| `SMTP_USER` | No* | SMTP login username |
-| `SMTP_PASSWORD` | No* | SMTP login password / app password |
-| `SMTP_FROM_EMAIL` | No* | Sender "From" address |
-
-\* SMTP vars are required only if you want emails to actually send. Without them the email is generated but not dispatched.
-
----
-
-## Quick Start
-
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Copy and fill in your env vars
-cp .env.example .env  # then edit .env
-
-# 3. Run the app
-streamlit run app.py
-```
+| `GROQ_API_KEY` | **Yes** | API key for Groq (Llama 3.3). |
+| `SERPAPI_KEY` | No | API key for SerpAPI; if omitted, the agent uses LLM fallback for signals. |
+| `SMTP_HOST` | No* | SMTP server (e.g., smtp.gmail.com). |
+| `SMTP_PORT` | No* | SMTP port (usually 587 for TLS). |
+| `SMTP_USER` | No* | SMTP login username. |
+| `SMTP_PASSWORD` | No* | SMTP app password. |
 
 ---
 
 ## Agent Workflow
 
 ```
-User fills in ICP + Company + Email
-            │
-            ▼
-   ┌────────────────────┐
-   │  tool_signal_       │
-   │  harvester          │──▶ Signals dict
-   └────────────────────┘
-            │
-            ▼
-   ┌────────────────────┐
-   │  tool_research_     │
-   │  analyst            │──▶ Account brief
-   └────────────────────┘
-            │
-            ▼
-   ┌────────────────────┐
-   │  tool_outreach_     │
-   │  automated_sender   │──▶ Email + Send status
-   └────────────────────┘
-            │
-            ▼
-   UI displays all results
+[ User defines ICP ]
+        │
+        ▼
+[ 1. Lead Generation ] ───────▶ [ 2. Signal Harvesting ]
+                                         │
+                                         ▼
+[ 4. Strategic Brief ] ◀─────── [ 3. Contact Discovery ]
+        │
+        ▼
+[ 5. Email Drafting ] ───────▶ [ 6. Delivery (SMTP) ]
 ```
+
