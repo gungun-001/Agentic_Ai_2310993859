@@ -185,7 +185,7 @@ if not st.session_state.splash_done:
     </html>
     """
 
-    st.components.v1.html(splash_html, height=1000, scrolling=False)
+    st.html(splash_html)
 
     time.sleep(6)
     st.session_state.splash_done = True
