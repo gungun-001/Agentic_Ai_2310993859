@@ -23,7 +23,8 @@ FireReach V2 is a powerful agentic AI platform that automates the entire sales o
 | Component | Technology |
 |-----------|-----------|
 | **UI** | Streamlit |
-| **LLM** | Groq API (Llama 3.3 70B Versatile) |
+| **LLM** | Groq API (Llama 3.1 8B Instant / Llama 3.3 70B) |
+| **Contact Data** | Hunter.io API (Optional) |
 | **Signal Source** | SerpAPI (Google Search) / LLM Fallback |
 | **Email** | Python `smtplib` (SMTP) |
 | **Orchestration** | Custom Agentic Workflow (Python) |
@@ -74,6 +75,7 @@ Edit `.env` and add your keys:
 ```env
 GROQ_API_KEY=your-groq-api-key      # Required
 SERPAPI_KEY=your-serpapi-key          # Optional (falls back to LLM)
+HUNTER_API_KEY=your-hunter-key        # Optional (for reliable email discovery)
 SMTP_HOST=smtp.gmail.com             # Optional (for actual sending)
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
