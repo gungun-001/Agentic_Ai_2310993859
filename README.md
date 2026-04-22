@@ -2,7 +2,7 @@
 
 **Lead Generation → Signal Harvesting → Contact Discovery → Research Analysis → Email Drafting → Automated Outreach**
 
-FireReach V2 is a powerful agentic AI platform that automates the entire sales outreach funnel. It identifies target companies based on your ICP, researches recent business signals, finds key decision-makers, and generates hyper-personalized outreach — all powered by Llama 3.3.
+FireReach is a powerful agentic AI platform that automates the entire sales outreach funnel. It identifies target companies based on your ICP, researches recent business signals, finds key decision-makers, and generates hyper-personalized outreach — all powered by Llama 3.3.
 
 ---
 
