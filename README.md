@@ -1,4 +1,4 @@
-# 🔥 FireReach V2 — Autonomous AI Outreach Agent
+# 🔥 FireReach — Autonomous AI Outreach Agent
 
 **Lead Generation → Signal Harvesting → Contact Discovery → Research Analysis → Email Drafting → Automated Outreach**
 
